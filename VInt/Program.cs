@@ -2487,8 +2487,9 @@ namespace VInt
 			public void updateDB()
 			{
 				System.Net.WebClient webClient = new System.Net.WebClient();
+				webClient.Encoding = System.Text.Encoding.UTF8;
 				string str = webClient.DownloadString("http://tim32.org/~freddie/VOSLookup/plain.php?VOS=");
-				System.IO.StreamWriter writer = new System.IO.StreamWriter("DB.dat");
+				System.IO.StreamWriter writer = new System.IO.StreamWriter("DB.dat", false, System.Text.Encoding.UTF8);
 				writer.Write(str);
 				writer.Close();
 			}
@@ -2496,8 +2497,9 @@ namespace VInt
 			public void updateAfixes()
 			{
 				System.Net.WebClient webClient = new System.Net.WebClient();
+				webClient.Encoding = System.Text.Encoding.UTF8;
 				string str = webClient.DownloadString("http://www.tim32.org/~freddie/VOSLookup/fixplain.php?VOS=");
-				System.IO.StreamWriter writer = new System.IO.StreamWriter("afixes.dat");
+				System.IO.StreamWriter writer = new System.IO.StreamWriter("afixes.dat", false, System.Text.Encoding.UTF8);
 				writer.Write(str);
 				writer.Close();
 			}
@@ -2505,7 +2507,7 @@ namespace VInt
 			public bool eatDB()
 			{
 				words.Clear();
-				System.IO.StreamReader reader = new System.IO.StreamReader("DB.dat");;
+				System.IO.StreamReader reader = new System.IO.StreamReader("DB.dat", System.Text.Encoding.UTF8);
 //				try
 //				{
 					string r = reader.ReadToEnd();
@@ -2543,7 +2545,7 @@ namespace VInt
 			
 			public bool eatAfixes()
 			{
-				System.IO.StreamReader reader = new System.IO.StreamReader("afixes.dat");;
+				System.IO.StreamReader reader = new System.IO.StreamReader("afixes.dat", System.Text.Encoding.UTF8);
 				try
 				{
 					List<afix> afixList = new List<afix>();
