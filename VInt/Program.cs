@@ -1103,30 +1103,6 @@ namespace VInt
 								System.Threading.Thread.Sleep(333);
 							}
 						}
-						else if (end.Contains("{") && end.Contains("}"))
-						{
-							string result = "";
-							bool fail = false;
-							
-							while (end.Contains("{") && end.Contains("}") && !fail)
-							{
-								result += end.Substring(0, end.IndexOf("{"));
-								Console.Write(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1));
-								if ((temp = vn.tryParse(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1), false, false)) != "FAILED!")
-									result += temp;
-								else if ((temp = vn.tryParse(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1), true, true)) != "FAILED!")
-									result += temp;
-								else
-									fail = true;
-								end = end.Substring(end.IndexOf("}") + 1);
-							}
-							
-							if (!fail)
-							{
-								result += end;
-								dFace.sendMsg(result);
-							}
-						}
 						else if (vp.tryParse(wordReplace(end, " ei", " /!" + sender + "!/"), out temp))
 						{
 							if (displayParseResults)
@@ -1159,6 +1135,30 @@ namespace VInt
 							catch (Exception ex)
 							{
 								Console.WriteLine("Err: " + ex.Message);
+							}
+						}
+						else if (end.Contains("{") && end.Contains("}"))
+						{
+							string result = "";
+							bool fail = false;
+							
+							while (end.Contains("{") && end.Contains("}") && !fail)
+							{
+								result += end.Substring(0, end.IndexOf("{"));
+								Console.Write(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1));
+								if ((temp = vn.tryParse(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1), false, false)) != "FAILED!")
+									result += temp;
+								else if ((temp = vn.tryParse(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1), true, true)) != "FAILED!")
+									result += temp;
+								else
+									fail = true;
+								end = end.Substring(end.IndexOf("}") + 1);
+							}
+							
+							if (!fail)
+							{
+								result += end;
+								dFace.sendMsg(result);
 							}
 						}
 						else if ((temp = vn.tryParse(end, false, false)) != "FAILED!")
