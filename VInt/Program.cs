@@ -569,6 +569,16 @@ namespace VInt
 		
 		public class alert
 		{
+			static string encodeStr(string str)
+			{
+				return System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str));
+			}
+			
+			static string decodeStr(string str)
+			{
+				return System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(str));
+			}
+			
 			public string notice;
 			public string person;
 			DateTime dt;
@@ -599,6 +609,14 @@ namespace VInt
 				timeOut = -1;
 			}
 			
+			public alert(string saveString)
+			{
+				string[] data = saveString.Split(' ');
+				notice = decodeStr(data[0]);
+				person = decodeStr(data[1]);
+				dt = System.DateTime.FromFileTimeUtc(long.Parse(decodeStr(data[2])));
+			}
+			
 			public alert(string personN, DateTime dtN, string noticeN)
 			{
 				person = personN;
@@ -627,6 +645,17 @@ namespace VInt
 //				minute = minuteN;
 //				notice = noticeN;
 //			}
+			
+			public string saveString()
+			{
+				System.Text.StringBuilder sb = new System.Text.StringBuilder();
+				
+				sb.Append(encodeStr(notice)); sb.Append(' ');
+				sb.Append(encodeStr(person)); sb.Append(' ');
+				sb.Append(encodeStr(dt.ToFileTimeUtc().ToString()));
+				
+				return sb.ToString();
+			}
 		}
 		
 		static deathFace dFace;
@@ -636,6 +665,31 @@ namespace VInt
 		
 		public static List<alert> alerts = new List<alert>();
 		public static Dictionary<string, Dictionary<string, string>> dictionary = new Dictionary<string, Dictionary<string, string>>();
+		public static List<string> noParses = new List<string>() { "lol", "yeah" };
+		
+		public static void writeOutAlerts()
+		{
+			System.IO.StreamWriter writer = new System.IO.StreamWriter("alerts.txt");
+			foreach (alert a in alerts)
+			{
+				writer.Write(a.saveString());
+			}
+			writer.Close();
+		}
+		
+		public static void readAlerts()
+		{
+			if (System.IO.File.Exists("alerts.txt"))
+		    {
+				System.IO.StreamReader reader = new System.IO.StreamReader("alerts.txt");
+				string line;
+				while ((line = reader.ReadLine()) != null)
+				{
+					alerts.Add(new alert(line));
+				}
+				reader.Close();
+			}
+		}
 		
 		public static void writeOutDictionary()
 		{
@@ -731,6 +785,8 @@ namespace VInt
 		
 		public static void mainLoop()
 		{
+			alerts.Clear();
+			readAlerts();
 			
 			bool displayParseResults = true;
 			
@@ -744,76 +800,467 @@ namespace VInt
 			
 			while(running)
 			{
-				// my ping
-				if (System.DateTime.Now.Minute != lastPingMin)
+				try
 				{
-					dFace.writeLine("PING AASOL" + dateTimeStr());
-					lastPingMin = System.DateTime.Now.Minute;
-				}
 				
-				msg = dFace.check();
-				
-				if (msg != null)
-				{
-					msgNick = msg.Split('!')[0].Substring(1);
-					msg = msg.Trim();
-					data = msg.Split(' ');
-					end = msg.Substring(msg.IndexOf(":") + 1);
-					if (end.Contains("!"))
-						sender = end.Substring(0, end.IndexOf("!"));
-					if (end.Contains(":"))
-						end = end.Substring(end.IndexOf(":") + 1);
-					endData = end.Split(' ');
-					if (data[1] == "PRIVMSG")
+					// my ping
+					if (System.DateTime.Now.Minute != lastPingMin)
 					{
-						Console.WriteLine("'" + end + "'");
-						if (end.Contains("FredFace") && dFace.board)
+						dFace.writeLine("PING AASOL" + dateTimeStr());
+						lastPingMin = System.DateTime.Now.Minute;
+					}
+					
+					msg = dFace.check();
+					
+					if (msg != null)
+					{
+						msgNick = msg.Split('!')[0].Substring(1);
+						msg = msg.Trim();
+						data = msg.Split(' ');
+						end = msg.Substring(msg.IndexOf(":") + 1);
+						if (end.Contains("!"))
+							sender = end.Substring(0, end.IndexOf("!"));
+						if (end.Contains(":"))
+							end = end.Substring(end.IndexOf(":") + 1);
+						endData = end.Split(' ');
+						if (data[1] == "PRIVMSG")
 						{
-							dFace.sendToBoard("douton 6");
-							dFace.sendToBoard("douton 7");
-							dFace.sendToBoard("douton 8");
-							System.Threading.Thread.Sleep(500);
-							dFace.sendToBoard("doutoff 6");
-							dFace.sendToBoard("doutoff 7");
-							dFace.sendToBoard("doutoff 8");
-							System.Threading.Thread.Sleep(500);
-							dFace.sendToBoard("douton 6");
-							dFace.sendToBoard("douton 7");
-							dFace.sendToBoard("douton 8");
-							System.Threading.Thread.Sleep(500);
-							dFace.sendToBoard("doutoff 6");
-							dFace.sendToBoard("doutoff 7");
-							dFace.sendToBoard("doutoff 8");
+							Console.WriteLine("'" + end + "'");
+							if (end.Contains("FredFace") && dFace.board)
+							{
+								dFace.sendToBoard("douton 6");
+								dFace.sendToBoard("douton 7");
+								dFace.sendToBoard("douton 8");
+								System.Threading.Thread.Sleep(500);
+								dFace.sendToBoard("doutoff 6");
+								dFace.sendToBoard("doutoff 7");
+								dFace.sendToBoard("doutoff 8");
+								System.Threading.Thread.Sleep(500);
+								dFace.sendToBoard("douton 6");
+								dFace.sendToBoard("douton 7");
+								dFace.sendToBoard("douton 8");
+								System.Threading.Thread.Sleep(500);
+								dFace.sendToBoard("doutoff 6");
+								dFace.sendToBoard("doutoff 7");
+								dFace.sendToBoard("doutoff 8");
+							}
+							if (end == "!vpUpdate")
+						    {
+						    	vp.updateDB();
+						    	vp.eatDB();
+						    	vp.updateAfixes();
+						    	vp.eatAfixes();
+						    }
+							else if (end == "!vNL")
+							{
+								vp.useNL = !vp.useNL;
+								if (vp.useNL)
+									dFace.sendMsg("Using NL");
+								else
+									dFace.sendMsg("Not Using NL");
+							}
+							else if (end == "!vSVO")
+							{
+								vp.useSVO = !vp.useSVO;
+								if (vp.useSVO)
+									dFace.sendMsg("Using SVO");
+								else
+									dFace.sendMsg("Not Using SVO");
+							}
+							else if (end == "!vWordCount")
+							{
+								dFace.sendMsg(vp.words.Count.ToString() + " Timlan words");
+							}
+							else if (end.StartsWith("!grabbed"))
+							{
+								try
+								{
+									grabThread.Abort();
+									dFace.sendToBoard("doutoff 6");
+									dFace.sendToBoard("doutoff 7");
+									dFace.sendToBoard("doutoff 8");
+								}
+								catch { }
+							}
+							else if (end.StartsWith("!alerted"))
+							{
+								for (int i = alerts.Count - 1; i >= 0; i--)
+								{
+									if (alerts[i].person == sender && alerts[i].timeOut > -1)
+									{
+										alerts.RemoveAt(i);
+										writeOutAlerts();
+									}
+								}
+							}
+							else if (end.StartsWith("!alertme "))
+							{
+								try
+								{
+									int cutoff = -1;
+									int t;
+									
+									end = end.Substring(8);
+									
+									t = end.LastIndexOf(" in ");
+									if (t > cutoff)
+										cutoff = t;
+									
+									t = end.LastIndexOf(" at ");
+									if (t > cutoff)
+										cutoff = t;
+									
+									t = end.LastIndexOf(" after ");
+									if (t > cutoff)
+										cutoff = t;
+									
+									if (cutoff == -1)
+									{
+										dFace.sendMsg("What?");
+									}
+									
+									string note = end.Substring(1, cutoff); // trim space
+									
+									TimeParser.report rprt;
+									DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
+									
+									if (rprt.failure != null)
+									{
+										dFace.sendMsg("Confused by your datetime sting...");
+										dFace.sendMsg(rprt.failure.Replace("\n", "  "));
+									}
+									else
+									{
+										dFace.sendMsg("You will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
+										
+										alerts.Add(new alert(sender, dt, note));
+										writeOutAlerts();
+									}
+								}
+								catch { }
+							}
+							else if (end.StartsWith("!alertall "))
+							{
+								try
+								{
+									int cutoff = 0;
+									int t;
+									
+									end = end.Substring(9);
+									
+									t = end.LastIndexOf(" in ");
+									if (t > cutoff)
+										cutoff = t;
+									
+									t = end.LastIndexOf(" at ");
+									if (t > cutoff)
+										cutoff = t;
+									
+									t = end.LastIndexOf(" after ");
+									if (t > cutoff)
+										cutoff = t;
+									
+									string note = end.Substring(1, cutoff); // trim space
+									
+									TimeParser.report rprt;
+									DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
+									
+									if (rprt.failure != null)
+									{
+										dFace.sendMsg("Confused by your datetime sting...");
+										dFace.sendMsg(rprt.failure.Replace("\n", "  "));
+									}
+									else
+									{
+										dFace.sendMsg("Everyone will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
+										
+										alerts.Add(new alert(dt, note));
+										writeOutAlerts();
+									}
+								}
+								catch { }
+							}
+							else if (end.StartsWith("!alert "))
+							{
+								try
+								{
+									// new syntax: !alert <meh> <[in|at|after]> timeclause
+									int cutoff = 0;
+									int t;
+									
+									end = end.Substring(endData[0].Length + endData[1].Length + 2);
+									
+									t = end.LastIndexOf(" in ");
+									if (t > cutoff)
+										cutoff = t;
+									
+									t = end.LastIndexOf(" at ");
+									if (t > cutoff)
+										cutoff = t;
+									
+									t = end.LastIndexOf(" after ");
+									if (t > cutoff)
+										cutoff = t;
+									
+									string note = end.Substring(0, cutoff);
+									
+									TimeParser.report rprt;
+									DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
+									
+									if (rprt.failure != null)
+									{
+										dFace.sendMsg("Confused by your datetime sting...");
+										dFace.sendMsg(rprt.failure.Replace("\n", "  "));
+									}
+									else
+									{
+										dFace.sendMsg("It will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
+										
+										alerts.Add(new alert(endData[1], dt, note));
+										writeOutAlerts();
+									}
+								}
+								catch { }
+							}
+							else if (end.StartsWith("!opme"))
+							{
+								for (int i = alerts.Count - 1; i >= 0; i--)
+								{
+									if (alerts[i].person == sender && alerts[i].timeOut > -1)
+									{
+										alerts.RemoveAt(i);
+										writeOutAlerts();
+									}
+								}
+							}
+							else if (end.StartsWith("!grab"))
+							{
+								Console.Beep();
+								int severity = 0;
+								if (end.Length > 6)
+									int.TryParse(end.Substring(6), out severity);
+								try { grabThread.Abort(); } catch { }
+								grabThread = new System.Threading.Thread(new System.Threading.ThreadStart(grab));
+								grabThread.Start();
+							}
+							else if (end.StartsWith("!vwv "))
+							{
+								dFace.sendMsg(vp.vwv(end.Substring(5)));
+							}
+							else if (end.StartsWith("!getV "))
+							{
+								if (end.Length > 6)
+								{
+									temp = end.Substring(6);
+									foreach (VOSParser.word w in vp.words)
+									{
+										if (w.Eng == temp)
+										{
+											dFace.sendMsg(w.VOS + " (" + w.catagory + ") : " + w.desc + " | " + w.def);
+											if (w.inferedCat != "none")
+											{
+												dFace.sendMsg("InferedCat: " + w.inferedCat);
+											}
+										}
+									}
+								}
+							}
+							else if (end.StartsWith("!getW "))
+							{
+								if (end.Length > 6)
+								{
+									temp = end.Substring(6);
+									foreach (VOSParser.word w in vp.words)
+									{
+										if (w.VOS == temp)
+										{
+											dFace.sendMsg(w.Eng + ": " + w.VOS + " (" + w.catagory + ") : " + w.desc + " | " + w.def);
+											if (w.inferedCat != "none")
+											{
+												dFace.sendMsg("InferedCat: " + w.inferedCat);
+											}
+										}
+									}
+								}
+							}
+							/*else if (end.StartsWith("!lrn_word "))
+							{
+								if (end.Length > 10)
+								{
+									temp = end.Substring(10);
+									VOSLearning.vwt[] vwts = VOSLearning.getVwtsOfWord(temp);
+									foreach (VOSLearning.vwt v in vwts)
+									{
+										dFace.sendMsg(v.key + " " + v.word + " " + v.target.ToString() + " " + v.type + " (" + v.depDodge().ToString() + ")");
+										System.Threading.Thread.Sleep(1000);
+									}
+								}
+							}
+							else if (end.StartsWith("!lrn_type "))
+							{
+								if (end.Length > 10)
+								{
+									temp = end.Substring(10);
+									VOSLearning.vwt[] vwts = VOSLearning.getVwtsOfType(temp);
+									foreach (VOSLearning.vwt v in vwts)
+									{
+										dFace.sendMsg(v.key + " " + v.word + " " + v.target.ToString() + " " + v.type + " (" + v.depDodge().ToString() + ")");
+										System.Threading.Thread.Sleep(1000);
+									}
+								}
+							}
+							else if (end.StartsWith("!lrn_type_nouns "))
+							{
+								if (end.Length > 16)
+								{
+									temp = end.Substring(16);
+									VOSLearning.vwt[] vwts = VOSLearning.getNounsOfType(temp);
+									foreach (VOSLearning.vwt v in vwts)
+									{
+										dFace.sendMsg(v.key + " " + v.word + " " + v.target.ToString() + " " + v.type + " (" + v.depDodge().ToString() + ")");
+										System.Threading.Thread.Sleep(1000);
+									}
+								}
+							}*/
+							else if (end == "!dpr")
+							{
+								displayParseResults = !displayParseResults;
+								if (displayParseResults)
+									dFace.sendMsg("Displaying Parse Results");
+								else
+									dFace.sendMsg("Not Displaying Parse Results");
+							}
+							else if (end.StartsWith("!p "))
+							{
+								dFace.sendMsg(vn.ps.parse(end.Substring(3), false, true));
+							}
+							else if (end.ToLower().StartsWith("!ev "))
+							{
+								if ((temp = vn.tryParse(end.Substring(4), false, false)) != "FAILED!")
+									dFace.sendMsg(temp);
+								else if (vp.tryParse(end.Substring(4), out temp))
+									dFace.sendMsg(temp);
+							}
+							else if (end.ToLower().StartsWith("!vos "))
+							{
+								if ((temp = vn.tryParse(end.Substring(5), false, false)) != "FAILED!")
+									dFace.sendMsg(temp);
+								else if (vp.tryParse(end.Substring(5), out temp))
+									dFace.sendMsg(temp);
+							}
+							else if (end.ToLower().StartsWith("!erv "))
+							{
+								if ((temp = vn.tryParse(end.Substring(5), false, true)) != "FAILED!")
+									dFace.sendMsg(temp);
+							}
+							else if (end.ToLower().StartsWith("!ep "))
+							{
+								if ((temp = vn.tryParse(end.Substring(4), true, false)) != "FAILED!")
+									dFace.sendMsg(temp);
+							}
+							else if (end.ToLower().StartsWith("!erp "))
+							{
+								if ((temp = vn.tryParse(end.Substring(5), true, true)) != "FAILED!")
+									dFace.sendMsg(temp);
+							}
+							else if (end.ToLower() == "!printvars")
+							{
+								foreach (string s in VNumParser.meh.funcs.vars.Keys)
+								{
+									dFace.sendMsg("== " + s + " " + VNumParser.meh.funcs.vars[s]);
+									System.Threading.Thread.Sleep(333);
+								}
+							}
+							else if (!noParses.Contains(end) && vp.tryParse(wordReplace(end, " ei", " /!" + sender + "!/"), out temp))
+							{
+								if (displayParseResults)
+									dFace.sendMsg(temp);
+								try {
+									if (vp.block.blocks.Count == 3)
+									{
+										
+										VOSParser.VOSBlock verb = vp.block.blocks[0];
+										VOSParser.VOSBlock obj = vp.block.blocks[1];
+										VOSParser.VOSBlock sbj = vp.block.blocks[2];
+										
+										if (obj.word == "thing [unknown]")
+										{
+											if (dictionary.ContainsKey(sbj.word) && dictionary[sbj.word].ContainsKey(verb.word))
+												dFace.sendMsg(sbj.word + " " + verb.word + " " + dictionary[sbj.word][verb.word]);
+										}
+										else
+										{
+											if (!dictionary.ContainsKey(sbj.word))
+												dictionary.Add(sbj.word, new Dictionary<string, string>());
+											if (dictionary[sbj.word].ContainsKey(verb.word))
+												dictionary[sbj.word][verb.word] += " || " + obj.getString();
+											else
+												dictionary[sbj.word].Add(verb.word, obj.getString());
+											writeOutDictionary();
+										}
+									}
+								}
+								catch (Exception ex)
+								{
+									Console.WriteLine("Err: " + ex.Message);
+								}
+							}
+							else if (end.Contains("{") && end.Contains("}"))
+							{
+								string result = "";
+								bool fail = false;
+								
+								while (end.Contains("{") && end.Contains("}") && !fail)
+								{
+									result += end.Substring(0, end.IndexOf("{"));
+									Console.Write(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1));
+									if ((temp = vn.tryParse(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1), false, false)) != "FAILED!")
+										result += temp;
+									else if ((temp = vn.tryParse(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1), true, true)) != "FAILED!")
+										result += temp;
+									else
+										fail = true;
+									end = end.Substring(end.IndexOf("}") + 1);
+								}
+								
+								if (!fail)
+								{
+									result += end;
+									dFace.sendMsg(result);
+								}
+							}
+							else if ((temp = vn.tryParse(end, false, false)) != "FAILED!")
+								dFace.sendMsg("VN Eval: " + temp);
+							else if ((temp = vn.tryParse(end, true, true)) != "FAILED!")
+								dFace.sendMsg("RP Eval: " + temp);
+							else if ((temp = vn.ps.tryParse(end, true, true)) != "FAILED!")
+								dFace.sendMsg("VN Pure Eval: " + temp);
+							else if ((temp = vn.ps.tryParse(end, false, true)) != "FAILED!")
+								dFace.sendMsg("RP Pure Eval: " + temp);
 						}
-						if (end == "!vpUpdate")
-					    {
-					    	vp.updateDB();
-					    	vp.eatDB();
-					    	vp.updateAfixes();
-					    	vp.eatAfixes();
-					    }
-						else if (end == "!vNL")
+						else if(data[1] == "NOTICE")
 						{
-							vp.useNL = !vp.useNL;
-							if (vp.useNL)
-								dFace.sendMsg("Using NL");
-							else
-								dFace.sendMsg("Not Using NL");
+							if (end.StartsWith("BOTHELP:"))
+							{
+								string[] hData = end.Split(':'); 
+								if (hData[1] == "IDENTIFY")
+								{
+									string[] supCmds = hData[2].Split(' ');
+									dFace.identifyThreaded(sender, supCmds);
+								}
+							}
 						}
-						else if (end == "!vSVO")
+					}
+					else
+					{
+						if (waiter < 200)
+							waiter++;
+						else
+							waiter = waiter = 195;
+						if (waiter == 200 && dFace.queryBoard("readdin 1") == "True")
 						{
-							vp.useSVO = !vp.useSVO;
-							if (vp.useSVO)
-								dFace.sendMsg("Using SVO");
-							else
-								dFace.sendMsg("Not Using SVO");
-						}
-						else if (end == "!vWordCount")
-						{
-							dFace.sendMsg(vp.words.Count.ToString() + " Timlan words");
-						}
-						else if (end.StartsWith("!grabbed"))
-						{
+							waiter = 0;
+							dFace.sendMsg("Busy!!!!");
 							try
 							{
 								grabThread.Abort();
@@ -823,405 +1270,33 @@ namespace VInt
 							}
 							catch { }
 						}
-						else if (end.StartsWith("!alerted"))
+					}
+					
+					for (int i = alerts.Count - 1; i >= 0; i--)
+					{
+						if (alerts[i].check())
 						{
-							for (int i = alerts.Count - 1; i >= 0; i--)
+							if (alerts[i].person == "")
 							{
-								if (alerts[i].person == sender && alerts[i].timeOut > -1)
-								{
-									alerts.RemoveAt(i);
-								}
+								dFace.sendMsg(alerts[i].notice);
+								alerts.RemoveAt(i);
+								writeOutAlerts();
 							}
-						}
-						else if (end.StartsWith("!alertme "))
-						{
-							try
-							{
-								int cutoff = -1;
-								int t;
-								
-								end = end.Substring(8);
-								
-								t = end.LastIndexOf(" in ");
-								if (t > cutoff)
-									cutoff = t;
-								
-								t = end.LastIndexOf(" at ");
-								if (t > cutoff)
-									cutoff = t;
-								
-								t = end.LastIndexOf(" after ");
-								if (t > cutoff)
-									cutoff = t;
-								
-								if (cutoff == -1)
-								{
-									dFace.sendMsg("What?");
-								}
-								
-								string note = end.Substring(1, cutoff); // trim space
-								
-								TimeParser.report rprt;
-								DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
-								
-								if (rprt.failure != null)
-								{
-									dFace.sendMsg("Confused by your datetime sting...");
-									dFace.sendMsg(rprt.failure.Replace("\n", "  "));
-								}
-								else
-								{
-									dFace.sendMsg("You will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
-									
-									alerts.Add(new alert(sender, dt, note));
-								}
-							}
-							catch { }
-						}
-						else if (end.StartsWith("!alertall "))
-						{
-							try
-							{
-								int cutoff = 0;
-								int t;
-								
-								end = end.Substring(9);
-								
-								t = end.LastIndexOf(" in ");
-								if (t > cutoff)
-									cutoff = t;
-								
-								t = end.LastIndexOf(" at ");
-								if (t > cutoff)
-									cutoff = t;
-								
-								t = end.LastIndexOf(" after ");
-								if (t > cutoff)
-									cutoff = t;
-								
-								string note = end.Substring(1, cutoff); // trim space
-								
-								TimeParser.report rprt;
-								DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
-								
-								if (rprt.failure != null)
-								{
-									dFace.sendMsg("Confused by your datetime sting...");
-									dFace.sendMsg(rprt.failure.Replace("\n", "  "));
-								}
-								else
-								{
-									dFace.sendMsg("Everyone will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
-									
-									alerts.Add(new alert(dt, note));
-								}
-							}
-							catch { }
-						}
-						else if (end.StartsWith("!alert "))
-						{
-							try
-							{
-								// new syntax: !alert <meh> <[in|at|after]> timeclause
-								int cutoff = 0;
-								int t;
-								
-								end = end.Substring(endData[0].Length + endData[1].Length + 2);
-								
-								t = end.LastIndexOf(" in ");
-								if (t > cutoff)
-									cutoff = t;
-								
-								t = end.LastIndexOf(" at ");
-								if (t > cutoff)
-									cutoff = t;
-								
-								t = end.LastIndexOf(" after ");
-								if (t > cutoff)
-									cutoff = t;
-								
-								string note = end.Substring(0, cutoff);
-								
-								TimeParser.report rprt;
-								DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
-								
-								if (rprt.failure != null)
-								{
-									dFace.sendMsg("Confused by your datetime sting...");
-									dFace.sendMsg(rprt.failure.Replace("\n", "  "));
-								}
-								else
-								{
-									dFace.sendMsg("It will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
-									
-									alerts.Add(new alert(endData[1], dt, note));
-								}
-							}
-							catch { }
-						}
-						else if (end.StartsWith("!opme"))
-						{
-							for (int i = alerts.Count - 1; i >= 0; i--)
-							{
-								if (alerts[i].person == sender && alerts[i].timeOut > -1)
-								{
-									alerts.RemoveAt(i);
-								}
-							}
-						}
-						else if (end.StartsWith("!grab"))
-						{
-							Console.Beep();
-							int severity = 0;
-							if (end.Length > 6)
-								int.TryParse(end.Substring(6), out severity);
-							try { grabThread.Abort(); } catch { }
-							grabThread = new System.Threading.Thread(new System.Threading.ThreadStart(grab));
-							grabThread.Start();
-						}
-						else if (end.StartsWith("!getV "))
-						{
-							if (end.Length > 6)
-							{
-								temp = end.Substring(6);
-								foreach (VOSParser.word w in vp.words)
-								{
-									if (w.Eng == temp)
-									{
-										dFace.sendMsg(w.VOS + " (" + w.catagory + ") : " + w.desc + " | " + w.def);
-										if (w.inferedCat != "none")
-										{
-											dFace.sendMsg("InferedCat: " + w.inferedCat);
-										}
-									}
-								}
-							}
-						}
-						else if (end.StartsWith("!getW "))
-						{
-							if (end.Length > 6)
-							{
-								temp = end.Substring(6);
-								foreach (VOSParser.word w in vp.words)
-								{
-									if (w.VOS == temp)
-									{
-										dFace.sendMsg(w.Eng + ": " + w.VOS + " (" + w.catagory + ") : " + w.desc + " | " + w.def);
-										if (w.inferedCat != "none")
-										{
-											dFace.sendMsg("InferedCat: " + w.inferedCat);
-										}
-									}
-								}
-							}
-						}
-						/*else if (end.StartsWith("!lrn_word "))
-						{
-							if (end.Length > 10)
-							{
-								temp = end.Substring(10);
-								VOSLearning.vwt[] vwts = VOSLearning.getVwtsOfWord(temp);
-								foreach (VOSLearning.vwt v in vwts)
-								{
-									dFace.sendMsg(v.key + " " + v.word + " " + v.target.ToString() + " " + v.type + " (" + v.depDodge().ToString() + ")");
-									System.Threading.Thread.Sleep(1000);
-								}
-							}
-						}
-						else if (end.StartsWith("!lrn_type "))
-						{
-							if (end.Length > 10)
-							{
-								temp = end.Substring(10);
-								VOSLearning.vwt[] vwts = VOSLearning.getVwtsOfType(temp);
-								foreach (VOSLearning.vwt v in vwts)
-								{
-									dFace.sendMsg(v.key + " " + v.word + " " + v.target.ToString() + " " + v.type + " (" + v.depDodge().ToString() + ")");
-									System.Threading.Thread.Sleep(1000);
-								}
-							}
-						}
-						else if (end.StartsWith("!lrn_type_nouns "))
-						{
-							if (end.Length > 16)
-							{
-								temp = end.Substring(16);
-								VOSLearning.vwt[] vwts = VOSLearning.getNounsOfType(temp);
-								foreach (VOSLearning.vwt v in vwts)
-								{
-									dFace.sendMsg(v.key + " " + v.word + " " + v.target.ToString() + " " + v.type + " (" + v.depDodge().ToString() + ")");
-									System.Threading.Thread.Sleep(1000);
-								}
-							}
-						}*/
-						else if (end == "!dpr")
-						{
-							displayParseResults = !displayParseResults;
-							if (displayParseResults)
-								dFace.sendMsg("Displaying Parse Results");
 							else
-								dFace.sendMsg("Not Displaying Parse Results");
-						}
-						else if (end.StartsWith("!p "))
-						{
-							dFace.sendMsg(vn.ps.parse(end.Substring(3), false, true));
-						}
-						else if (end.ToLower().StartsWith("!ev "))
-						{
-							if ((temp = vn.tryParse(end.Substring(4), false, false)) != "FAILED!")
-								dFace.sendMsg(temp);
-							else if (vp.tryParse(end.Substring(4), out temp))
-								dFace.sendMsg(temp);
-						}
-						else if (end.ToLower().StartsWith("!vos "))
-						{
-							if ((temp = vn.tryParse(end.Substring(5), false, false)) != "FAILED!")
-								dFace.sendMsg(temp);
-							else if (vp.tryParse(end.Substring(5), out temp))
-								dFace.sendMsg(temp);
-						}
-						else if (end.ToLower().StartsWith("!erv "))
-						{
-							if ((temp = vn.tryParse(end.Substring(5), false, true)) != "FAILED!")
-								dFace.sendMsg(temp);
-						}
-						else if (end.ToLower().StartsWith("!ep "))
-						{
-							if ((temp = vn.tryParse(end.Substring(4), true, false)) != "FAILED!")
-								dFace.sendMsg(temp);
-						}
-						else if (end.ToLower().StartsWith("!erp "))
-						{
-							if ((temp = vn.tryParse(end.Substring(5), true, true)) != "FAILED!")
-								dFace.sendMsg(temp);
-						}
-						else if (end.ToLower() == "!printvars")
-						{
-							foreach (string s in VNumParser.meh.funcs.vars.Keys)
 							{
-								dFace.sendMsg("== " + s + " " + VNumParser.meh.funcs.vars[s]);
-								System.Threading.Thread.Sleep(333);
-							}
-						}
-						else if (vp.tryParse(wordReplace(end, " ei", " /!" + sender + "!/"), out temp))
-						{
-							if (displayParseResults)
-								dFace.sendMsg(temp);
-							try {
-								if (vp.block.blocks.Count == 3)
-								{
-									
-									VOSParser.VOSBlock verb = vp.block.blocks[0];
-									VOSParser.VOSBlock obj = vp.block.blocks[1];
-									VOSParser.VOSBlock sbj = vp.block.blocks[2];
-									
-									if (obj.word == "thing [unknown]")
-									{
-										if (dictionary.ContainsKey(sbj.word) && dictionary[sbj.word].ContainsKey(verb.word))
-											dFace.sendMsg(sbj.word + " " + verb.word + " " + dictionary[sbj.word][verb.word]);
-									}
-									else
-									{
-										if (!dictionary.ContainsKey(sbj.word))
-											dictionary.Add(sbj.word, new Dictionary<string, string>());
-										if (dictionary[sbj.word].ContainsKey(verb.word))
-											dictionary[sbj.word][verb.word] += " || " + obj.getString();
-										else
-											dictionary[sbj.word].Add(verb.word, obj.getString());
-										writeOutDictionary();
-									}
-								}
-							}
-							catch (Exception ex)
-							{
-								Console.WriteLine("Err: " + ex.Message);
-							}
-						}
-						else if (end.Contains("{") && end.Contains("}"))
-						{
-							string result = "";
-							bool fail = false;
-							
-							while (end.Contains("{") && end.Contains("}") && !fail)
-							{
-								result += end.Substring(0, end.IndexOf("{"));
-								Console.Write(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1));
-								if ((temp = vn.tryParse(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1), false, false)) != "FAILED!")
-									result += temp;
-								else if ((temp = vn.tryParse(end.Substring(end.IndexOf("{") + 1, end.IndexOf("}") - end.IndexOf("{") - 1), true, true)) != "FAILED!")
-									result += temp;
-								else
-									fail = true;
-								end = end.Substring(end.IndexOf("}") + 1);
-							}
-							
-							if (!fail)
-							{
-								result += end;
-								dFace.sendMsg(result);
-							}
-						}
-						else if ((temp = vn.tryParse(end, false, false)) != "FAILED!")
-							dFace.sendMsg("VN Eval: " + temp);
-						else if ((temp = vn.tryParse(end, true, true)) != "FAILED!")
-							dFace.sendMsg("RP Eval: " + temp);
-						else if ((temp = vn.ps.tryParse(end, true, true)) != "FAILED!")
-							dFace.sendMsg("VN Pure Eval: " + temp);
-						else if ((temp = vn.ps.tryParse(end, false, true)) != "FAILED!")
-							dFace.sendMsg("RP Pure Eval: " + temp);
-					}
-					else if(data[1] == "NOTICE")
-					{
-						if (end.StartsWith("BOTHELP:"))
-						{
-							string[] hData = end.Split(':'); 
-							if (hData[1] == "IDENTIFY")
-							{
-								string[] supCmds = hData[2].Split(' ');
-								dFace.identifyThreaded(sender, supCmds);
+								dFace.sendMsg(alerts[i].person + ": " + alerts[i].notice);
+								alerts.RemoveAt(i); // should make a nice repeating system
+								writeOutAlerts();
 							}
 						}
 					}
+					
+					System.Threading.Thread.Sleep(140);
 				}
-				else
+				catch (Exception ex)
 				{
-					if (waiter < 200)
-						waiter++;
-					else
-						waiter = waiter = 195;
-					if (waiter == 200 && dFace.queryBoard("readdin 1") == "True")
-					{
-						waiter = 0;
-						dFace.sendMsg("Busy!!!!");
-						try
-						{
-							grabThread.Abort();
-							dFace.sendToBoard("doutoff 6");
-							dFace.sendToBoard("doutoff 7");
-							dFace.sendToBoard("doutoff 8");
-						}
-						catch { }
-					}
+					dFace.sendMsg("Not a happy bunny " + ex.Message);
 				}
-				
-				for (int i = alerts.Count - 1; i >= 0; i--)
-				{
-					if (alerts[i].check())
-					{
-						if (alerts[i].person == "")
-						{
-							dFace.sendMsg(alerts[i].notice);
-							alerts.RemoveAt(i);
-						}
-						else
-						{
-							dFace.sendMsg(alerts[i].person + ": " + alerts[i].notice);
-							alerts.RemoveAt(i); // should make a nice repeating system
-						}
-					}
-				}
-				
-				System.Threading.Thread.Sleep(140);
 			}
 		}
 		
@@ -3273,6 +3348,130 @@ namespace VInt
 				return null;
 			}
 			
+			string[] alphabet = new string[]
+			{
+				"a",
+				"b",
+				"c",
+				"d",
+				"e",
+				"f",
+				"g",
+				"h",
+				"i",
+				"j",
+				"k",
+				"l",
+				"m",
+				"n",
+				"o",
+				"p",
+				"q",
+				"r",
+				"s",
+				"t",
+				"u",
+				"v",
+				"w",
+				"x",
+				"y",
+				"z",
+				"t~s",
+				"t~c",
+				"d~j",
+				"d~z"
+			};
+			string[] alphabetTypes = new string[]
+			{
+				"V",
+				"C",
+				"F",
+				"C",
+				"V",
+				"F",
+				"C",
+				"F",
+				"V",
+				"F",
+				"C",
+				"C",
+				"N",
+				"N",
+				"V",
+				"C",
+				"V",
+				"C",
+				"F",
+				"C",
+				"V",
+				"F",
+				"C",
+				"F",
+				"C",
+				"F",
+				"A",
+				"A",
+				"A",
+				"A"
+			};
+			
+			public string getLetterType(string letter)
+			{
+				return alphabetTypes[Array.IndexOf(alphabet, letter)];
+			}
+		
+			public string vwv(string wv)
+			{
+				if (wv.Length < 2)
+					return "2 letters or more please";
+				
+				string prev = wv.Substring(0, 1);
+				string prevType = getLetterType(prev);
+				for (int i = 1; i < wv.Length; i++)
+				{
+					string cur = wv.Substring(i, 1);
+					if (i + 2 < wv.Length)
+					{
+						if (wv[i + 1] == '~')
+						{
+							cur = wv.Substring(i, 3);
+							i += 2;
+						}
+					}
+					string curType = getLetterType(cur);
+					
+					if (prevType != "V" && curType != "V")
+					{
+						if ((prevType == "F" || prevType == "N") && curType == "C")
+						{
+						}
+						else
+							return "Illegal pair: " + prevType + curType + " (" + prev + cur + ")";
+					}
+					
+					prev = cur;
+					prevType = curType;
+				}
+				
+				
+				foreach (word w in words)
+				{
+					if (wv == w.VOS)
+						return "Word match: " + w.VOS + " - " + w.Eng;
+				}
+				
+				
+				foreach (afix a in afixes)
+				{
+					if (a.pre && (wv.StartsWith(a.shortForm) || a.shortForm.StartsWith(wv)))
+						return "Prefix match: " + a.shortForm;
+					if (!a.pre && (wv.EndsWith(a.shortForm) || a.shortForm.EndsWith(wv)))
+						return "Postfix match: " + a.shortForm;
+				}
+				
+				
+				return "Looks ok";
+			}
 		}
 		
 		public class VNumParser
