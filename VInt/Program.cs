@@ -880,7 +880,7 @@ namespace VInt
 								}
 								catch (Exception ex)
 								{
-									dFace.writeLine("Crash when trying to update: " + ex.Message);
+									dFace.sendMsg("Crash when trying to update: " + ex.Message);
 								}
 							}
 							if (end == "!vpUpdate")
