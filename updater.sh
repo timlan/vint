@@ -1,6 +1,6 @@
 #!/bin/bash
 
-output="$(git pull --ff-only)"
+output="$(git pull --ff-only 2>> updater.log)"
 
 if [ "$?" != "0" ]; then
   echo "Return value was evil" 2>> updater.log
