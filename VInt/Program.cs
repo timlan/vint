@@ -672,7 +672,7 @@ namespace VInt
 			System.IO.StreamWriter writer = new System.IO.StreamWriter("alerts.txt");
 			foreach (alert a in alerts)
 			{
-				writer.Write(a.saveString());
+				writer.WriteLine(a.saveString());
 			}
 			writer.Close();
 		}
@@ -685,7 +685,8 @@ namespace VInt
 				string line;
 				while ((line = reader.ReadLine()) != null)
 				{
-					alerts.Add(new alert(line));
+					if (line != "")
+						alerts.Add(new alert(line));
 				}
 				reader.Close();
 			}
