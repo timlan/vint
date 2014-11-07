@@ -845,6 +845,36 @@ namespace VInt
 								dFace.sendToBoard("doutoff 7");
 								dFace.sendToBoard("doutoff 8");
 							}
+							if (end == "!update")
+							{
+								System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo("../updater.sh");
+								psi.UseShellExecute = true;
+								psi.RedirectStandardOutput = true;
+								psi.RedirectStandardInput = true;
+								
+								System.Diagnostics.Process gitter = System.Diagnostics.Process.Start(psi);
+								
+								string gitresp = gitter.StandardOutput.ReadLine();
+								
+								if (gitresp == "READY")
+								{
+									dFace.sendMsg("Updating...");
+									
+									try {
+									dFace.disConnect();
+									} catch { } // no faith
+									
+									gitter.StandardInput.WriteLine("THUS");
+									
+									return;
+								}
+								else
+								{
+									dFace.sendMsg("Not updating");
+								}
+								
+								return; // die horribly
+							}
 							if (end == "!vpUpdate")
 						    {
 						    	vp.updateDB();
@@ -925,17 +955,17 @@ namespace VInt
 									TimeParser.report rprt;
 									DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
 									
-									if (rprt.failure != null)
-									{
-										dFace.sendMsg("Confused by your datetime sting...");
-										dFace.sendMsg(rprt.failure.Replace("\n", "  "));
-									}
-									else
+									if (rprt.failure == null || DateTime.TryParse(end.Substring(cutoff + 1), out dt))
 									{
 										dFace.sendMsg("You will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
 										
 										alerts.Add(new alert(sender, dt, note));
 										writeOutAlerts();
+									}
+									else
+									{
+										dFace.sendMsg("Confused by your datetime sting...");
+										dFace.sendMsg(rprt.failure.Replace("\n", "  "));
 									}
 								}
 								catch { }
@@ -966,17 +996,17 @@ namespace VInt
 									TimeParser.report rprt;
 									DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
 									
-									if (rprt.failure != null)
-									{
-										dFace.sendMsg("Confused by your datetime sting...");
-										dFace.sendMsg(rprt.failure.Replace("\n", "  "));
-									}
-									else
+									if (rprt.failure == null || DateTime.TryParse(end.Substring(cutoff + 1), out dt))
 									{
 										dFace.sendMsg("Everyone will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
 										
 										alerts.Add(new alert(dt, note));
 										writeOutAlerts();
+									}
+									else
+									{
+										dFace.sendMsg("Confused by your datetime sting...");
+										dFace.sendMsg(rprt.failure.Replace("\n", "  "));
 									}
 								}
 								catch { }
@@ -1008,17 +1038,17 @@ namespace VInt
 									TimeParser.report rprt;
 									DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
 									
-									if (rprt.failure != null)
-									{
-										dFace.sendMsg("Confused by your datetime sting...");
-										dFace.sendMsg(rprt.failure.Replace("\n", "  "));
-									}
-									else
+									if (rprt.failure == null || DateTime.TryParse(end.Substring(cutoff + 1), out dt))
 									{
 										dFace.sendMsg("It will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
 										
 										alerts.Add(new alert(endData[1], dt, note));
 										writeOutAlerts();
+									}
+									else
+									{
+										dFace.sendMsg("Confused by your datetime sting...");
+										dFace.sendMsg(rprt.failure.Replace("\n", "  "));
 									}
 								}
 								catch { }
