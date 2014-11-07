@@ -850,7 +850,7 @@ namespace VInt
 								try
 								{
 									System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo("../updater.sh");
-									psi.UseShellExecute = true;
+									psi.UseShellExecute = false;
 									psi.RedirectStandardOutput = true;
 									psi.RedirectStandardInput = true;
 									
