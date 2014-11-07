@@ -847,33 +847,38 @@ namespace VInt
 							}
 							if (end == "!update")
 							{
-								System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo("../updater.sh");
-								psi.UseShellExecute = true;
-								psi.RedirectStandardOutput = true;
-								psi.RedirectStandardInput = true;
-								
-								System.Diagnostics.Process gitter = System.Diagnostics.Process.Start(psi);
-								
-								string gitresp = gitter.StandardOutput.ReadLine();
-								
-								if (gitresp == "READY")
+								try
 								{
-									dFace.sendMsg("Updating...");
+									System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo("../updater.sh");
+									psi.UseShellExecute = true;
+									psi.RedirectStandardOutput = true;
+									psi.RedirectStandardInput = true;
 									
-									try {
-									dFace.disConnect();
-									} catch { } // no faith
+									System.Diagnostics.Process gitter = System.Diagnostics.Process.Start(psi);
 									
-									gitter.StandardInput.WriteLine("THUS");
+									string gitresp = gitter.StandardOutput.ReadLine();
 									
-									return;
+									if (gitresp == "READY")
+									{
+										dFace.sendMsg("Updating...");
+										
+										try {
+										dFace.disConnect();
+										} catch { } // no faith
+										
+										gitter.StandardInput.WriteLine("THUS");
+										
+										return; // die horribly
+									}
+									else
+									{
+										dFace.sendMsg("Not updating");
+									}
 								}
-								else
+								catch (Exception ex)
 								{
-									dFace.sendMsg("Not updating");
+									dFace.writeLine("Crash when trying to update: " + ex.Message);
 								}
-								
-								return; // die horribly
 							}
 							if (end == "!vpUpdate")
 						    {
@@ -929,21 +934,31 @@ namespace VInt
 								try
 								{
 									int cutoff = -1;
+									int cutoff2 = -1;
 									int t;
 									
 									end = end.Substring(8);
 									
 									t = end.LastIndexOf(" in ");
 									if (t > cutoff)
+									{
 										cutoff = t;
+										cutoff2 = t + 3;
+									}
 									
 									t = end.LastIndexOf(" at ");
 									if (t > cutoff)
+									{
 										cutoff = t;
+										cutoff2 = t + 3;
+									}
 									
 									t = end.LastIndexOf(" after ");
 									if (t > cutoff)
+									{
 										cutoff = t;
+										cutoff2 = t + 6;
+									}
 									
 									if (cutoff == -1)
 									{
@@ -955,7 +970,7 @@ namespace VInt
 									TimeParser.report rprt;
 									DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
 									
-									if (rprt.failure == null || DateTime.TryParse(end.Substring(cutoff + 1), out dt))
+									if (rprt.failure == null || DateTime.TryParse(end.Substring(cutoff2 + 1), out dt))
 									{
 										dFace.sendMsg("You will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
 										
@@ -975,28 +990,38 @@ namespace VInt
 								try
 								{
 									int cutoff = 0;
+									int cutoff2 = 0;
 									int t;
 									
 									end = end.Substring(9);
 									
 									t = end.LastIndexOf(" in ");
 									if (t > cutoff)
+									{
 										cutoff = t;
+										cutoff2 = t + 3;
+									}
 									
 									t = end.LastIndexOf(" at ");
 									if (t > cutoff)
+									{
 										cutoff = t;
+										cutoff2 = t + 3;
+									}
 									
 									t = end.LastIndexOf(" after ");
 									if (t > cutoff)
+									{
 										cutoff = t;
+										cutoff2 = t + 6;
+									}
 									
 									string note = end.Substring(1, cutoff); // trim space
 									
 									TimeParser.report rprt;
 									DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
 									
-									if (rprt.failure == null || DateTime.TryParse(end.Substring(cutoff + 1), out dt))
+									if (rprt.failure == null || DateTime.TryParse(end.Substring(cutoff2 + 1), out dt))
 									{
 										dFace.sendMsg("Everyone will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
 										
@@ -1017,28 +1042,38 @@ namespace VInt
 								{
 									// new syntax: !alert <meh> <[in|at|after]> timeclause
 									int cutoff = 0;
+									int cutoff2 = 0;
 									int t;
 									
 									end = end.Substring(endData[0].Length + endData[1].Length + 2);
 									
 									t = end.LastIndexOf(" in ");
 									if (t > cutoff)
+									{
 										cutoff = t;
+										cutoff2 = t + 3;
+									}
 									
 									t = end.LastIndexOf(" at ");
 									if (t > cutoff)
+									{
 										cutoff = t;
+										cutoff2 = t + 3;
+									}
 									
 									t = end.LastIndexOf(" after ");
 									if (t > cutoff)
+									{
 										cutoff = t;
+										cutoff2 = t + 6;
+									}
 									
 									string note = end.Substring(0, cutoff);
 									
 									TimeParser.report rprt;
 									DateTime dt = tp.parseRelativeDateTime(end.Substring(cutoff + 1), out rprt);
 									
-									if (rprt.failure == null || DateTime.TryParse(end.Substring(cutoff + 1), out dt))
+									if (rprt.failure == null || DateTime.TryParse(end.Substring(cutoff2 + 1), out dt))
 									{
 										dFace.sendMsg("It will be alerted at " + dt.ToLongDateString() + " " + dt.ToLongTimeString());
 										
