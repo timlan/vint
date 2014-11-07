@@ -18,4 +18,4 @@ echo "READY"
 
 read -r steve
 
-mono VInt.exe &
+mono VInt.exe & 2>&1 >LOG.LOG
