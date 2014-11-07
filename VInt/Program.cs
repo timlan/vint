@@ -847,37 +847,30 @@ namespace VInt
 							}
 							if (end == "!update")
 							{
-								try
+								System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo("../updater.sh");
+								psi.UseShellExecute = false;
+								psi.RedirectStandardOutput = true;
+								psi.RedirectStandardInput = true;
+								
+								System.Diagnostics.Process gitter = System.Diagnostics.Process.Start(psi);
+								
+								string gitresp = gitter.StandardOutput.ReadLine();
+								
+								if (gitresp == "READY")
 								{
-									System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo("../updater.sh");
-									psi.UseShellExecute = true;
-									psi.RedirectStandardOutput = true;
-									psi.RedirectStandardInput = true;
+									dFace.sendMsg("Updating...");
 									
-									System.Diagnostics.Process gitter = System.Diagnostics.Process.Start(psi);
+									try {
+									dFace.disConnect();
+									} catch { } // no faith
 									
-									string gitresp = gitter.StandardOutput.ReadLine();
+									gitter.StandardInput.WriteLine("THUS");
 									
-									if (gitresp == "READY")
-									{
-										dFace.sendMsg("Updating...");
-										
-										try {
-										dFace.disConnect();
-										} catch { } // no faith
-										
-										gitter.StandardInput.WriteLine("THUS");
-										
-										return; // die horribly
-									}
-									else
-									{
-										dFace.sendMsg("Not updating");
-									}
+									return; // die horribly
 								}
-								catch (Exception ex)
+								else
 								{
-									dFace.writeLine("Crash when trying to update: " + ex.Message);
+									dFace.sendMsg("Not updating");
 								}
 							}
 							if (end == "!vpUpdate")
