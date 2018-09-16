@@ -3484,62 +3484,91 @@ namespace VInt
 				"A"
 			};
 			
+			public class VWVException : Exception
+			{
+				public VWVException(string msg) : base(msg)
+				{
+				}
+			}
+			
 			public string getLetterType(string letter)
 			{
-				return alphabetTypes[Array.IndexOf(alphabet, letter)];
+				int idx = Array.IndexOf(alphabet, letter);
+				if (idx < 0)
+					throw new VWVException("Unrecognised letter: " + letter);
+				return alphabetTypes[idx];
 			}
 		
+			public string nextLetter(string w, ref int i)
+			{
+				string res = w.Substring(i, 1);
+				
+				if (i + 2 < w.Length)
+				{
+					if (w[i + 1] == '~')
+					{
+						res = w.Substring(i, 3);
+						i += 2;
+					}
+				}
+				
+				i++;
+				return res;
+			}
+			
 			public string vwv(string wv)
 			{
-				if (wv.Length < 2)
-					return "2 letters or more please";
-				
-				string prev = wv.Substring(0, 1);
-				string prevType = getLetterType(prev);
-				for (int i = 1; i < wv.Length; i++)
+				try
 				{
-					string cur = wv.Substring(i, 1);
-					if (i + 2 < wv.Length)
-					{
-						if (wv[i + 1] == '~')
-						{
-							cur = wv.Substring(i, 3);
-							i += 2;
-						}
-					}
-					string curType = getLetterType(cur);
+					wv = wv.ToLower();
 					
-					if (prevType != "V" && curType != "V")
+					if (wv.Length < 2)
+						return "2 letters or more please";
+					
+					int i = 0;
+					string prev = nextLetter(wv, ref i);
+					string prevType = getLetterType(prev);
+					for (; i < wv.Length;)
 					{
-						if ((prevType == "F" || prevType == "N") && curType == "C")
+						string cur = nextLetter(wv, ref i);
+						string curType = getLetterType(cur);
+						
+						if (prevType != "V" && curType != "V")
 						{
+							if ((prevType == "F" || prevType == "N") && curType == "C")
+							{
+							}
+							else
+								return "Illegal pair: " + prevType + curType + " (" + prev + cur + ")";
 						}
-						else
-							return "Illegal pair: " + prevType + curType + " (" + prev + cur + ")";
+						
+						prev = cur;
+						prevType = curType;
 					}
 					
-					prev = cur;
-					prevType = curType;
+					
+					foreach (word w in words)
+					{
+						if (wv == w.VOS)
+							return "Word match: " + w.VOS + " - " + w.Eng;
+					}
+					
+					
+					foreach (afix a in afixes)
+					{
+						if (a.pre && (wv.StartsWith(a.shortForm) || a.shortForm.StartsWith(wv)))
+							return "Prefix match: " + a.shortForm;
+						if (!a.pre && (wv.EndsWith(a.shortForm) || a.shortForm.EndsWith(wv)))
+							return "Postfix match: " + a.shortForm;
+					}
+					
+					
+					return "Looks ok";
 				}
-				
-				
-				foreach (word w in words)
+				catch (VWVException vwvex)
 				{
-					if (wv == w.VOS)
-						return "Word match: " + w.VOS + " - " + w.Eng;
+					return vwvex.Message;
 				}
-				
-				
-				foreach (afix a in afixes)
-				{
-					if (a.pre && (wv.StartsWith(a.shortForm) || a.shortForm.StartsWith(wv)))
-						return "Prefix match: " + a.shortForm;
-					if (!a.pre && (wv.EndsWith(a.shortForm) || a.shortForm.EndsWith(wv)))
-						return "Postfix match: " + a.shortForm;
-				}
-				
-				
-				return "Looks ok";
 			}
 		}
 		
